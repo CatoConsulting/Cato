@@ -16,12 +16,11 @@ These scripts install Node.js and the `http-server` package, which provides a si
 ### Windows
 
 ```powershell
-# First run: as Administrator if Node.js is not installed yet
-# (http-server itself is installed for whoever runs the script)
+# Run as Administrator
 .\setup-webserver.ps1
 
 # Or install and start immediately
-.\setup-webserver.ps1 -Port 8081 -Start
+.\setup-webserver.ps1 -Port 8080 -Start
 
 # Specify a directory to serve
 .\setup-webserver.ps1 -Directory "C:\Projects\MyApp" -Port 3000 -Start
@@ -54,22 +53,21 @@ chmod +x setup-webserver.sh
    - Zero-configuration
    - Supports various options (CORS, caching, gzip, etc.)
 
-3. **Wrapper Script** (`start-webserver.ps1`, included in the repository, or `start-webserver.sh`)
+3. **Wrapper Script** (`start-webserver.ps1` or `start-webserver.sh`)
    - Convenience script for starting the server
    - Simplifies common usage patterns
-   - On Windows, listens on `127.0.0.1` (this computer only) unless you pass `-Address 0.0.0.0`
 
 ## Installation Details
 
 ### Windows Installation
 
 The PowerShell script:
-- Needs Administrator privileges only when Node.js is not installed yet
+- Requires Administrator privileges
 - Installs Chocolatey (if not present)
 - Installs Node.js LTS via Chocolatey
-- Installs http-server globally via npm, for the account running the script
-- Optionally starts the server through `start-webserver.ps1`
-- Exits with code `1` if a step failed; safe to run again
+- Installs http-server globally via npm
+- Creates a convenience wrapper script
+- Optionally starts the server
 
 ### Linux/macOS Installation
 
@@ -92,20 +90,17 @@ After installation, you can use the convenient wrapper script:
 
 #### Windows
 ```powershell
-# Start with default settings (port 8081, current directory)
+# Start with default settings (port 8080, current directory)
 .\start-webserver.ps1
 
 # Specify port
 .\start-webserver.ps1 -Port 3000
 
 # Open browser automatically
-.\start-webserver.ps1 -Port 8081 -Open
+.\start-webserver.ps1 -Port 8080 -Open
 
 # Specify directory
-.\start-webserver.ps1 -Directory "C:\path\to\files" -Port 8081
-
-# Share on the local network (listens on every network, not just this computer)
-.\start-webserver.ps1 -Address 0.0.0.0
+.\start-webserver.ps1 -Directory "C:\path\to\files" -Port 8080
 ```
 
 #### Linux/macOS
@@ -238,8 +233,6 @@ http-server -S -C cert.pem -K key.pem
 
 **Solution:** Use a different port or kill the process using that port
 
-The Windows scripts default to port 8081, because 8080 is often already taken on Windows, for example by the Apache service that EnterpriseDB's Postgres tools install (`PEMHTTPD-x64`).
-
 ```bash
 # Windows
 netstat -ano | findstr :8080
@@ -344,12 +337,9 @@ ifconfig | grep "inet "
 ip addr show
 ```
 
-2. Start server, listening on every network:
+2. Start server:
 ```bash
-http-server -a 0.0.0.0 -p 8080
-
-# Windows wrapper script
-.\start-webserver.ps1 -Address 0.0.0.0
+http-server -p 8080
 ```
 
 3. Access from another device:

@@ -51,22 +51,11 @@ This setup script installs everything you need for:
    
    # Minimal install (Python + VS Code only)
    .\setup-data-science.ps1 -SkipR -SkipDatabases -SkipDocker -SkipPowerBI
-
-   # Choose the PostgreSQL 'postgres' password (otherwise a random one is
-   # generated and shown in the install output)
-   .\setup-data-science.ps1 -PostgresPassword (Read-Host -AsSecureString "postgres password")
    ```
-
-   The script is safe to run again: installed tools are skipped, the failed
-   steps are listed at the end, and it exits with code `1` if any step failed.
-   The per-user steps (VS Code extensions, conda for PowerShell, the
-   `DataScience` workspace) run through `setup-data-science-user.ps1`. If you
-   elevate with a separate admin account they are skipped, and you run
-   `.\setup-data-science-user.ps1` yourself in a normal PowerShell window.
 
 5. **After installation:**
    - Restart your terminal
-   - Run `.\create-datasci-env.ps1` (from this folder, in a normal non-admin window) to create the conda environment
+   - Run `.\create-datasci-env.ps1` to create the conda environment
    - Restart your computer (if Docker was installed)
 
 ## What Gets Installed
@@ -182,9 +171,7 @@ The script creates a workspace at `%USERPROFILE%\DataScience`:
 After restarting your terminal:
 
 ```powershell
-# Run the environment creation script (from the setup scripts folder,
-# in a normal non-admin window). Safe to run again: an existing
-# 'datasci' environment is kept and missing packages are added.
+# Run the environment creation script
 .\create-datasci-env.ps1
 
 # This creates a 'datasci' environment with:
@@ -285,10 +272,7 @@ df.show()
 
 ### Creating Data Pipelines with Airflow
 
-Airflow does not run natively on Windows and is not part of the `datasci`
-environment. Install it inside WSL or run it with Docker, then:
-
-```bash
+```powershell
 # Initialize Airflow
 airflow db init
 
