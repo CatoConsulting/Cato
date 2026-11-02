@@ -85,7 +85,7 @@ How the server is set up for data work:
 
 ## Preparing data: `datatool.py`
 
-`data-server/datatool.py` converts, checks and catalogs your files. It needs Python 3.10+ and pyarrow, and runs from your normal account (no admin needed):
+`data-server/datatool.py` converts, checks and catalogs your files. It needs Python 3.10+ and pyarrow, and runs from your normal account (no admin needed). Run these from this repository's folder:
 
 ```powershell
 py -m pip install pyarrow
@@ -94,7 +94,7 @@ py data-server\datatool.py validate
 py data-server\datatool.py catalog
 ```
 
-`validate` and `catalog` use `C:\DataServer\public\data` by default; pass `--data-dir` for another folder. Every command exits with 1 if something failed (2 for a usage mistake, such as an unknown option), so it can be used in scripts.
+`validate` and `catalog` use `C:\DataServer\public\data` by default; pass `--data-dir` for another folder. If that folder doesn't exist yet (the server isn't set up on this PC), they stop with `the following arguments are required: --data-dir`. Every command exits with 1 if something failed (2 for a usage mistake, such as an unknown option), so it can be used in scripts.
 
 ### `convert`: CSV to Parquet
 
@@ -111,7 +111,7 @@ The command:
 
   Values like `1.10` (a version number) or `1E5` aren't detected, because prices such as `2.50` and scientific notation look the same. If a column holds codes like those, add `--string-columns name`.
 - Stops with a clear message, instead of writing bad data, when:
-  - The text isn't UTF-8. Excel exports on Windows are often cp1252: add `--encoding cp1252`.
+  - The text isn't UTF-8. In Excel's **Save As**, "CSV UTF-8 (Comma delimited)" works as is, but plain "CSV (Comma delimited)" saves cp1252 on Western-language Windows: add `--encoding cp1252`.
   - The file uses `;` or tabs as separators: add `--delimiter ';'` or `--delimiter tab`.
   - A column looks numeric at first but has text further down: add `--string-columns name`.
   - The header has empty or duplicate column names.
@@ -121,6 +121,7 @@ The command:
 - Stores a column as decimals if it starts with whole numbers and has decimals further down (`1`, `2`, ... `2.5`).
 - Turns blank cells into missing values in every column. `NA`, `N/A`, `NULL` and `NaN` count as missing only **in numeric columns**; text columns keep them as written, so `NA` for Namibia stays `NA`.
 - Handles quoted cells that contain line breaks, and blank lines before the header.
+- Reads dates only in `yyyy-mm-dd` form. Excel saves cells as they're displayed, so `1/5/2026` dates and `$12.50` amounts stay text; format those columns as `yyyy-mm-dd` and plain numbers in Excel before saving. Excel also drops leading zeros as you type, before the CSV is written, unless the column is formatted as Text.
 
 ### `validate`: check before you publish
 
@@ -176,6 +177,8 @@ Data tools (`datatool.py`), tested on Linux with pyarrow 26:
   - Replacing a `.parquet` while someone is downloading it. Windows may lock the file; the tool then says it's in use instead of failing silently.
   - Real Excel exports.
   - Windows paths and the default data folder.
+
+  [`data-server/WINDOWS-CHECKLIST.md`](data-server/WINDOWS-CHECKLIST.md) walks through each of these on kevin-Mini, with the output to expect. On Windows the test suite skips two tests that need things Windows doesn't allow by default: a file name with control characters, and a symlink (allowed only with Developer Mode or admin rights).
 
 
 The script hasn't been run on Windows yet. What was tested, in a Linux sandbox:

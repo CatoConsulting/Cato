@@ -273,12 +273,16 @@ def test_temp_file_never_follows_a_planted_link(tmp_path, capsys, monkeypatch):
     victim = write(tmp_path / "victim.txt", "keep me")
     src = write(tmp_path / "sales.csv", "a\n1\n")
     monkeypatch.setattr(datatool.secrets, "token_hex", lambda n: "fixed")
-    (tmp_path / ".sales.parquet.fixed.tmp").symlink_to(victim)
+    try:
+        (tmp_path / ".sales.parquet.fixed.tmp").symlink_to(victim)
+    except OSError:  # Windows allows symlinks only with Developer Mode or admin rights
+        pytest.skip("this account can't create symlinks")
     assert run("convert", str(src)) == 1
     assert victim.read_text() == "keep me"
     assert not (tmp_path / "sales.parquet").exists()
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows file names can't contain control characters")
 def test_control_characters_in_names_are_escaped(tmp_path, capsys):
     data = tmp_path / "data"
     data.mkdir()
@@ -459,24 +463,25 @@ def test_catalog_contents_escaping_and_stability(tmp_path, capsys):
     (data / "sub").mkdir(parents=True)
     write(data / "sales.csv", "id,amount\n1,2\n")
     assert run("convert", str(data / "sales.csv")) == 0
-    write(data / "sub" / "a&b <x>.csv", "q\n1\n")
+    write(data / "sub" / "a&b 'x'.csv", "<q>\n1\n")  # < > aren't allowed in Windows names
     write(data / ".hidden.csv", "a\n1\n")
     write(data / "notes.txt", "hi")
     assert run("catalog", "--data-dir", str(data)) == 0
 
     doc = json.loads((tmp_path / "public" / "catalog.json").read_text(encoding="utf-8"))
     paths = [d["path"] for d in doc["datasets"]]
-    assert paths == ["sales.csv", "sales.parquet", "sub/a&b <x>.csv"]
+    assert paths == ["sales.csv", "sales.parquet", "sub/a&b 'x'.csv"]
     parquet = next(d for d in doc["datasets"] if d["format"] == "parquet")
     assert parquet["rows"] == 1
     assert parquet["columns"][0] == {"name": "id", "type": "int64"}
     assert "rows" not in next(d for d in doc["datasets"] if d["path"] == "sales.csv")
     odd = next(d for d in doc["datasets"] if d["path"].startswith("sub/"))
-    assert odd["url"] == "/data/sub/a%26b%20%3Cx%3E.csv"
+    assert odd["url"] == "/data/sub/a%26b%20%27x%27.csv"
 
     page = (tmp_path / "public" / "catalog.html").read_text(encoding="utf-8")
-    assert "a&amp;b &lt;x&gt;.csv" in page
-    assert "<x>" not in page
+    assert "a&amp;b &#x27;x&#x27;.csv" in page
+    assert "&lt;q&gt;" in page
+    assert "<q>" not in page
 
     capsys.readouterr()
     assert run("catalog", "--data-dir", str(data)) == 0
