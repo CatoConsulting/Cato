@@ -138,7 +138,13 @@ Once the download has finished, run the same `convert ... --force` again. It sho
 
 If the first `--force` says `OK` while the download is still running, Windows allowed the swap. That isn't a failure (the reader keeps the old copy), but please mention it, because then the doc should say so.
 
-## 8. Clean up
+## 8. Catalog the test files, then clean up
+
+```powershell
+py $tool catalog
+```
+
+**Expect:** `Wrote:` for both files, because the data folder now has the test files. Reload `http://localhost:8080/catalog.html`: `excel-utf8.parquet` lists its columns with types, and `big.parquet` shows `300,000` rows.
 
 ```powershell
 Remove-Item $data\big.parquet, $data\excel-*.parquet, $data\open-in-excel.csv
@@ -146,7 +152,7 @@ py $tool catalog
 cd $HOME; Remove-Item -Recurse $HOME\datatest
 ```
 
-**Expect:** `catalog` prints `Wrote:` for both files, because the list of datasets changed.
+**Expect:** `Wrote:` for both files again, because the test files are gone from the list.
 
 ## Sending results back
 
